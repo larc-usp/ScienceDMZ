@@ -2,9 +2,9 @@
 
 Collection of scripts to provision and test data transfer in a ScienceDMZ using Mininet on a Vagrant box running Ubuntu 14.04.2 LTS (Trusty Tahr).
 
-Vagrant host:
-- Vagrant 1.7.2
+Mac OS X:
 - VirtualBox 4.3.28r100309
+- Vagrant 1.7.2
 - Ubuntu 14.04.2 LTS (Trusty Tahr)
 
 Vagrant guest VM:
@@ -26,6 +26,10 @@ $ vagrant up
 
 # log into the vm
 $ vagrant ssh 
+
+# start up the POX controller
+$ pox/pox.py log.level --DEBUG openflow.of_01 --port=6633 forwarding.l2_learning
+$ pox/pox.py log.level --DEBUG openflow.of_01 --port=6634 forwarding.l2_learning
 
 # run the data transfer tests
 $ sudo bash run.sh
