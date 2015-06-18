@@ -67,7 +67,7 @@ $MININET = <<SCRIPT
   if [ ! -d mininet ];
   then 
     echo "Installing mininet..."
-    git clone https://github.com/mininet/mininet mininet
+    git clone https://github.com/mininet/mininet.git mininet
     cd mininet
       git checkout -b 2.2.1 2.2.1
       ./util/install.sh -fn
@@ -163,7 +163,8 @@ Vagrant.configure("2") do |config|
   config.vm.network :private_network, ip: "192.168.56.101" # hostonly network (vboxnet0) 192.168.56/24
 
   # ports forwarded for services
-  #config.vm.network :forwarded_port, guest:6633, host:6634 # pox
+  #config.vm.network :forwarded_port, guest:6633, host:6633 # pox
+  #config.vm.network :forwarded_port, guest:6634, host:6634 # pox
   config.vm.network :forwarded_port, guest:8008, host:8008 # sFlow-RT
 
   ## SSH config

@@ -24,7 +24,12 @@ $ vagrant up
 
 <<< wait a long time while the system initializes >>>
 
+# consider taking a snapshot of this clean install
+$ vagrant halt
+$ vagrant snapshot take default fresh
+
 # log into the vm
+$ vagrant up
 $ vagrant ssh 
 
 # start up the POX controller
