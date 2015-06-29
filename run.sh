@@ -18,11 +18,6 @@ start=`date`
 exptid=`date +%b%d-%H:%M`
 outdir=results-$exptid
 
-# Note: you need to make sure you report the results
-# for the correct port!
-# In this example, we are assuming that each
-# client is connected to port 2 on its switch.
-
 for n in 1; do
     size=25
     bw=100
@@ -31,21 +26,30 @@ for n in 1; do
         --dir $outdir \
 	--bw $bw \
 	--time 5 \
-	--size $size 
-#	--cli
+	--size $size \
+	--cli
 
     echo "*** Creating iperf plots"
     python util/plot_rate.py \
-	--main "iperf TX Rates ($bw Mbps)" \
+	--main "iperf UDP TX Rates ($bw Mbps)" \
 	--maxy $bw \
-        -f $outdir/bwm-iperf.txt \
-        -o $outdir/rate-iperf.png
+        -f $outdir/bwm-iperf-udp.txt \
+        -o $outdir/rate-iperf-udp.png
 
-<<COMMENT
+    python util/plot_rate.py \
+	--main "iperf TCP TX Rates ($bw Mbps)" \
+	--maxy $bw \
+        -f $outdir/bwm-iperf-tcp.txt \
+        -o $outdir/rate-iperf-tcp.png
+
+    echo "*** Creating tcpprobe plots"
     python util/plot_tcpprobe.py \
-        -f $outdir/tcp_probe.txt \
-        -o $outdir/cwnd.png
-COMMENT
+        -f $outdir/tcp_probe-tcp.txt \
+        -o $outdir/cwnd-tcp.png
+
+    python util/plot_tcpprobe.py \
+        -f $outdir/tcp_probe-udp.txt \
+        -o $outdir/cwnd-udp.png
 
     echo "*** Creating file transer plots"
     python util/plot_rate.py \

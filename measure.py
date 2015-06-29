@@ -18,7 +18,7 @@ import sys
 import os
 from util.monitor import monitor_devs_ng
 
-parser = argparse.ArgumentParser(description="Topology bandwith and TCP tests")
+parser = argparse.ArgumentParser(description="Topology bandwith and TCP/UDP tests")
 
 parser.add_argument('--dir', '-d',
                     help="Directory to store outputs",
@@ -68,9 +68,12 @@ def progress(t):
         sys.stdout.flush()
         sleep(1)
 
-def start_tcpprobe():
+def start_tcpprobe(protocol=None):
     os.system("rmmod tcp_probe 1>/dev/null 2>&1; modprobe tcp_probe")
-    Popen("cat /proc/net/tcpprobe > %s/tcp_probe.txt" % args.dir, shell=True)
+    if protocol:
+        Popen("cat /proc/net/tcpprobe > %s/tcp_probe-%s.txt" % (args.dir, protocol), shell=True)
+    else:
+        Popen("cat /proc/net/tcpprobe > %s/tcp_probe.txt" % args.dir, shell=True)
 
 def stop_tcpprobe():
     os.system("killall -9 cat; rmmod tcp_probe")
@@ -123,39 +126,60 @@ def get_rates(iface, nsamples=1, period=30, wait=10):
 
 def iperf_experiment(net):
     print "*** Running iperf experiment"
-    seconds = args.time
-
-    # Start the bandwidth and cwnd monitors in the background
-    monitor = Process(target=monitor_devs_ng, args=('%s/bwm-iperf.txt' % args.dir, 1.0))
-    monitor.start()
-    start_tcpprobe()
-
+    
     # Get receiver and clients
-    receiver = net.getNodeByName('receiver')
     sender = net.getNodeByName('sender')
-
+    receiver = net.getNodeByName('receiver')
+    
     s1 = net.getNodeByName('s1')
-
-    # Start the receiver
+    s2 = net.getNodeByName('s2')
+    
     port = 5001
-    receiver.cmd('iperf -s -p', port, '> %s/iperf_server.txt' % args.dir, '&')
-    waitListening(sender, receiver, port)
-
-    sender.sendCmd('iperf -c %s -p %s -t %d -i 1 -yc > %s/iperf_client.txt' %
-	           (receiver.IP(), port, seconds, args.dir), printPid=True)
-
-    # Turn off and turn on links
-    #rates = get_rates(iface='s1-eth1')
-    #print rates
-
+    
+    # Start the bandwidth and cwnd monitors in the background
+    monitor = Process(target=monitor_devs_ng, args=('%s/bwm-iperf-udp.txt' % args.dir, 1.0))
+    monitor.start()
+    start_tcpprobe("udp")
+    
+    # Start the receiver
+    receiver.cmd('iperf -s -w 256K -l 16K -u -p', port, '> %s/iperf_server-udp.txt' % args.dir, '&')
+    
+    print "*** Starting iperf udp"
+    sender.sendCmd('iperf -c %s -p %s -t %d -i 1 -r -w 256K -l 16K -u -b %dM -yc > %s/iperf_client-udp.txt' %
+	           (receiver.IP(), port, args.time, args.bw, args.dir))
     sender.waitOutput(verbose=True)
+    print "*** Killing iperf proc"
 
     receiver.cmd('kill %iperf')
 
     # Shut down monitors
     stop_tcpprobe()
     monitor.terminate()
+    os.system("killall -9 bwm-ng")
+    
+    
+    ### do tcp test
+    monitor = Process(target=monitor_devs_ng, args=('%s/bwm-iperf-tcp.txt' % args.dir, 1.0))
+    monitor.start()
+    start_tcpprobe("tcp")
+    
+    # Start the receiver
+    receiver.cmd('iperf -s -w 256K -l 16K -p', port, '> %s/iperf_server-tcp.txt' % args.dir, '&')
+    waitListening(sender, receiver, port)
 
+    print "*** Starting iperf tcp"
+    sender.sendCmd('iperf -c %s -p %s -t %d -i 1 -r -w 256K -l 16K -yc > %s/iperf_client-tcp.txt' %
+	           (receiver.IP(), port, args.time, args.dir))
+    sender.waitOutput(verbose=True)
+    print "*** Killing iperf proc"
+    
+    receiver.cmd('kill %iperf')
+    
+    # Shut down monitors
+    stop_tcpprobe()
+    monitor.terminate()
+    os.system("killall -9 bwm-ng")
+    
     print "*** End iperf experiment"
 
 def transfer_experiment(net, program):
@@ -188,7 +212,8 @@ def transfer_experiment(net, program):
 
     # Shut down monitors                                                                                                      
     monitor.terminate()
-
+    os.system("killall -9 bwm-ng")
+    
     print "*** End file transfer experiment"
 
 def check_prereqs():
@@ -202,26 +227,19 @@ def check_prereqs():
 
 def main():
     host = custom(CPULimitedHost, cpu=.15) # 15% of system bandwidth
-    link = custom(TCLink, max_queue_size=200)
+    link = custom(TCLink, max_queue_size=500)
 
     #net = Mininet(host=host, link=link, controller=RemoteController, switch=OVSKernelSwitch)
     net = Mininet(host=host, link=link, controller=DefaultController, switch=OVSKernelSwitch)
     
     print "*** Creating controllers"
-    #c1 = net.addController( 'c1', port=6633 )
-    #c2 = net.addController( 'c2', port=6634 )
     #c1 = RemoteController('c1', ip='127.0.0.1', port=6633)
     #c2 = RemoteController('c2', ip='127.0.0.1', port=6634)
-    #c2 = Controller('c2')
-
-    #cmap = { 's1': c1, 's2': c2 }
-    """
-    for c in [ c1, c2 ]:
-        net.addController(c)
-    """
     #c1 = net.addController('c1', controller=RemoteController, ip="127.0.0.1", port=6633)
     #c2 = net.addController('c2', controller=RemoteController, ip="127.0.0.1", port=6634)
-    c0 = net.addController()
+
+    c1 = net.addController('c1')
+    c2 = net.addController('c2')
 
     print "*** Creating switches"
     s1 = net.addSwitch('s1')
@@ -244,12 +262,10 @@ def main():
     print "\n*** Building the network"
     net.build()
     
-    '''
-    c1.start()
-    c2.start()
+#    c1.start()
+#    c2.start()
     s1.start([ c1 ])
     s2.start([ c2 ])
-    '''
 
     net.start()
     start = time()
@@ -270,7 +286,6 @@ def main():
     end = time()
     net.stop()
 
-    os.system("killall -9 bwm-ng")
     print "Experiment took %.3f seconds" % (end - start)
 
 if __name__ == '__main__':
