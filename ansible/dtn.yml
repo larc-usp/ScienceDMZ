@@ -1,0 +1,6 @@
+---
+- name: setup a hpc cluster in openstack
+  hosts: os_ctrl
+  tags: provision
+  roles:
+    - provision

@@ -1,0 +1,31 @@
+---
+- name: create nova key-pair
+  nova_keypair: 
+    name: "{{ os_key }}"
+#    public_key: "{{ lookup('file', '/glusterfs/users/npho/.ssh/id_rsa.pub') }}" 
+    state: present 
+
+    auth_url: "{{ lookup('env', 'OS_AUTH_URL') }}" 
+    login_username: "{{ lookup('env', 'OS_USERNAME') }}" 
+    login_password: "{{ lookup('env', 'OS_PASSWORD') }}" 
+    login_tenant_name: "{{ lookup('env', 'OS_TENANT_NAME') }}" 
+
+- name: create all vms
+  nova_compute:
+    name: "{{ item }}"
+
+    flavor_id: "{{ os_flavor }}"
+    image_id: "{{ os_image }}"
+    key_name: "{{ os_key }}"
+    state: present 
+
+    auth_url: "{{ lookup('env', 'OS_AUTH_URL') }}"
+    login_username: "{{ lookup('env', 'OS_USERNAME') }}"
+    login_password: "{{ lookup('env', 'OS_PASSWORD') }}"
+    login_tenant_name: "{{ lookup('env', 'OS_TENANT_NAME') }}"
+  with_items: groups.cluster
+
+- name: confirm ssh access 
+  wait_for: host={{ item }} port=22 search_regex=OpenSSH state=started 
+  with_items: groups.cluster
+
