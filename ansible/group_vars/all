@@ -1,0 +1,11 @@
+---
+os_key: ansible_key
+os_image: 0e50e989-9b33-442f-8e3b-227c41296c88 #CentOS-6.0-v1.0
+
+#os_flavor: 6 #m1.xxlarge, 16 vCPU, 20G HD, 32G ram
+#os_flavor: 5  #m1.xlarge,  8 vCPU, 20G HD, 32G ram
+os_flavor: 4    #m1.large,  4 vCPU, 20G HD,  8G ram
+#os_flavor: 3  #m1.medium,  2 vCPU, 20G HD,  4G ram
+
+openssh_version: "6.6p1"
+openssh_patch: "hpnssh14v5"
