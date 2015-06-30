@@ -19,22 +19,22 @@
 
 - name: get openssh src
   get_url:
-    url="http://download.openpkg.org/components/cache/openssh/openssh-{{ openssh_version }}.tar.gz"
+    url=http://download.openpkg.org/components/cache/openssh/openssh-{{ openssh_version }}.tar.gz
     dest=/usr/src/
     sha256sum=48c1f0664b4534875038004cc4f3555b8329c2a81c1df48db5c517800de203bb
 
 - name: get openssh patch
   get_url:
-    url="http://download.openpkg.org/components/cache/openssh/openssh-{{ openssh_version }}-{{ openssh_patch }}.diff.gz"
+    url=http://download.openpkg.org/components/cache/openssh/openssh-{{ openssh_version }}-{{ openssh_patch }}.diff.gz
     dest=/usr/src/
     sha256sum=682b4a6880d224ee0b7447241b684330b731018585f1ba519f46660c10d63950
 
 - name: untar openssh src
   unarchive:
-    src="/usr/src/openssh-{{ openssh_version }}.tar.gz"
+    src=/usr/src/openssh-{{ openssh_version }}.tar.gz
     dest=/usr/src/ 
     copy=no 
-    creates="/usr/src/openssh-{{ openssh_version }}/"
+    creates=/usr/src/openssh-{{ openssh_version }}
   register: openssh_src
 
 - name: untar openssh patch
