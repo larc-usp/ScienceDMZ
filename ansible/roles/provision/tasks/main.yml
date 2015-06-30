@@ -23,9 +23,13 @@
     login_username: "{{ lookup('env', 'OS_USERNAME') }}"
     login_password: "{{ lookup('env', 'OS_PASSWORD') }}"
     login_tenant_name: "{{ lookup('env', 'OS_TENANT_NAME') }}"
-  with_items: groups.cluster
+  with_items: groups.dtn
+  register: vm
 
 - name: confirm ssh access 
   wait_for: host={{ item }} port=22 search_regex=OpenSSH state=started 
-  with_items: groups.cluster
+  with_items: groups.dtn
 
+- name: wait 30 seconds for good measure :)
+  pause: seconds=30
+  when: vm|changed

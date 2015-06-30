@@ -1,0 +1,9 @@
+#
+# ScienceDMZ hosts
+#
+
+[os_ctrl]
+loginnode	ansible_ssh_user=npho	ansible_ssh_private_key_file=/glusterfs/users/npho/.ssh/osdc.pem
+
+[dtn]
+dtn
