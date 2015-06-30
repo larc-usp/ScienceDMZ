@@ -32,4 +32,4 @@
 
 - name: wait 30 seconds for good measure :)
   pause: seconds=30
-  when: vm|changed
+  when: vm.changed
