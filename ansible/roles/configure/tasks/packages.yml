@@ -1,0 +1,94 @@
+---
+- name: install dtn packages
+  yum: name={{ item }} state=latest
+  with_items:
+    - autoconf 
+    - gcc 
+    - git 
+    - glibc-devel 
+    - krb5-devel 
+    - make 
+    - openssl 
+    - openssl-devel 
+    - pam
+    - pam-devel 
+    - patch 
+    - rpm-build 
+    - tcp_wrappers
+    - tcp_wrappers-devel.x86_64 
+    - yum-plugin-priorities
+    - zlib 
+    - zlib-devel 
+
+#- name: add epel repository
+#  yum: name=epel-release state=latest
+
+#- name: update ssl certificates
+#  yum: name=ca-certificates state=latest disablerepo=epel
+
+- name: python-2.7 | install prerequisites
+  yum: pkg={{ item }} state=latest
+  with_items:
+    - bzip2-devel
+    - openssl-devel
+    - sqlite-devel
+    - zlib-devel
+
+- name: python-2.7 | get source
+  get_url:
+    url=https://www.python.org/ftp/python/2.7.10/Python-2.7.10.tgz
+    dest=/tmp/
+    sha256sum=eda8ce6eec03e74991abb5384170e7c65fcd7522e409b8e83d7e6372add0f12a
+
+- name: python-2.7 | untar source
+  unarchive:
+    src=/tmp/Python-2.7.10.tgz
+    dest=/tmp/
+    copy=no
+    creates=/tmp/Python-2.7.10/
+  register: python_src
+
+- name: python-2.7 | configure
+  command: ./configure --prefix=/usr/local
+    chdir=/tmp/Python-2.7.10
+  when: python_src.changed
+
+- name: python-2.7 | make
+  command: /usr/bin/make
+    chdir=/tmp/Python-2.7.10
+  when: python_src.changed
+
+- name: python-2.7 | make altinstall
+  command: /usr/bin/make altinstall
+    chdir=/tmp/Python-2.7.10
+  when: python_src.changed
+
+- name: python setuptools | get source
+  get_url:
+    url=https://pypi.python.org/packages/source/s/setuptools/setuptools-1.4.2.tar.gz
+    dest=/tmp/
+    sha256sum=263986a60a83aba790a5bffc7d009ac88114ba4e908e5c90e453b3bf2155dbbd
+
+- name: python setuptools | untar source
+  unarchive:
+    src=/tmp/setuptools-1.4.2.tar.gz
+    dest=/tmp/
+    copy=no
+    creates=/tmp/setuptools-1.4.2/
+  register: setuptools_src
+
+- name: python setuptools | install
+  command: /usr/local/bin/python2.7 setup.py install
+    chdir=/tmp/setuptools-1.4.2/
+  when: setuptools_src.changed
+
+- name: python pip | get source
+  get_url:
+    url=https://raw.githubusercontent.com/pypa/pip/master/contrib/get-pip.py
+    dest=/tmp/
+    sha256sum=0d156a0ab947f847a0facb832985433d9fc7d5480be86af24c31716670d65116
+
+- name: python pip | install
+  command: /usr/local/bin/python2.7 get-pip.py
+    chdir=/tmp/
+    creates=/usr/local/bin/pip
