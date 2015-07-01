@@ -1,3 +1,4 @@
 ---
 - name: parcel | install
   command: pip install -e 'git+https://github.com/LabAdvComp/parcel#egg=parcel'
+    creates=/usr/local/bin/parcel
