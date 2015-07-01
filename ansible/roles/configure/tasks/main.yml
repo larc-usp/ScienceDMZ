@@ -14,6 +14,7 @@
     - rpm-build 
     - tcp_wrappers
     - tcp_wrappers-devel.x86_64 
+    - yum-plugin-priorities
     - zlib 
     - zlib-devel 
 
@@ -128,3 +129,26 @@
 
 - name: reload sshd configs
   service: name=sshd state=reloaded
+
+#- name: add epel repository
+#  yum: name=epel-release state=latest
+
+#- name: update ssl certificates
+#  yum: name=ca-certificates state=latest disablerepo=epel
+
+- name: globus | get rpm
+  get_url:
+    url=http://www.globus.org/ftppub/gt5/5.2/stable/installers/repo/Globus-5.2.stable-config.centos-6-2.noarch.rpm
+    dest=/tmp/
+    sha256sum=7dfdca53d3ec32bf864dd292718e6b12d3d6453a203ccc143c32f418c62dfeaf
+  register: globus_rpm
+
+- name: globus | install repo
+  command: rpm -Uvh --force /tmp/Globus-5.2.stable-config.centos-6-2.noarch.rpm
+  when: globus_rpm.changed
+
+- name: globus | install packages
+  yum: name=globus-gridftp state=latest
+
+- name: globus | enable sshftp
+  command: /usr/sbin/globus-gridftp-server-enable-sshftp
