@@ -1,4 +1,9 @@
+.DS_Store
 *~
 .vagrant
 *.pyc
 tmp
+*.aux
+*.bbl
+*.blg
+*.synctex.gz
